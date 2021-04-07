@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { CSSTransition } from "react-transition-group";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 
@@ -8,6 +9,7 @@ import contactsActions from "../../redux/contacts/contactsActions";
 const INITIAL_STATE = {
   name: "",
   number: "",
+  alert: false,
 };
 
 class ContactForm extends Component {
@@ -41,8 +43,12 @@ class ContactForm extends Component {
     }
   };
 
+  changeState = () => {
+    setTimeout(() => this.setState({ alert: false }), 2000);
+  };
+
   render() {
-    const { name, number } = this.state;
+    const { name, number, alert } = this.state;
     return (
       <>
         <form onSubmit={this.handleSubmit}>
@@ -68,6 +74,15 @@ class ContactForm extends Component {
             Add contact
           </button>
         </form>
+        <CSSTransition
+          onEntered={() => this.changeState()}
+          in={alert}
+          timeout={500}
+          classNames="Alert-anime"
+          unmountOnExit
+        >
+          <p className="Alert-wrp">This name is already in contacts!</p>
+        </CSSTransition>
       </>
     );
   }
