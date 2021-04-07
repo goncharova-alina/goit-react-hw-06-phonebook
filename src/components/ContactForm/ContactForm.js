@@ -1,7 +1,9 @@
-import { Component } from "react";
+import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { v4 as uuid } from "uuid";
+import { connect } from "react-redux";
+
 import "./ContactForm.css";
+import contactsActions from "../../redux/contacts/contactsActions";
 
 const INITIAL_STATE = {
   name: "",
@@ -11,71 +13,75 @@ const INITIAL_STATE = {
 class ContactForm extends Component {
   state = INITIAL_STATE;
 
-  handleChangeForm = ({ target }) => {
-    const { name, value } = target;
-    this.setState({ [name]: value });
-  };
-
-  handleSubmitForm = (e) => {
-    e.preventDefault();
-
-    const { name, number } = this.state;
-    const { onAdd } = this.props;
-
-    const isValidatedForm = this.validateForm();
-
-    if (!isValidatedForm) return;
-    onAdd({ id: uuid(), name, number });
-
-    this.resetForm();
-  };
-
-  validateForm = () => {
-    const { name, number } = this.state;
-    const { onCheckUnique } = this.props;
-    if ((!name, !number)) {
-      alert("Some filed is empty");
-      return false;
+  handleChange = (type, e) => {
+    const { contacts } = this.props;
+    if (type === "name") {
+      const contactInState = contacts.find(
+        (contact) => contact.name.toLowerCase() === e.target.value.toLowerCase()
+      );
+      if (contactInState) {
+        this.setState({ alert: true });
+      }
     }
-    return onCheckUnique(name);
+    this.setState({ [type]: e.target.value });
   };
 
-  resetForm = () => this.setState(INITIAL_STATE);
+  handleSubmit = (e) => {
+    e.preventDefault();
+    const { name, number } = this.state;
+    const { onAddContact, contacts } = this.props;
+    const contactInState = contacts.find(
+      (contact) => contact.name.toLowerCase() === name.toLowerCase()
+    );
+    contactInState && this.setState({ alert: true });
+    if (!contactInState && name && number) {
+      onAddContact(name, number);
+      this.setState(INITIAL_STATE);
+      return;
+    }
+  };
 
   render() {
     const { name, number } = this.state;
-
     return (
-      <form onSubmit={this.handleSubmitForm}>
-        <h3>Name</h3>
-        <label>
-          <input
-            type="text"
-            name="name"
-            placeholder="Enter name"
-            value={name}
-            onChange={this.handleChangeForm}
-          />
-        </label>
-        <br />
-        <h3>Number</h3>
-        <label>
-          <input
-            type="tel"
-            name="number"
-            placeholder="Enter phone number"
-            value={number}
-            onChange={this.handleChangeForm}
-          />
-        </label>
-        <br />
-        <button type="submit" className="buttonForm">
-          Add contact
-        </button>
-      </form>
+      <>
+        <form onSubmit={this.handleSubmit}>
+          <h3>Name</h3>
+          <label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => this.handleChange("name", e)}
+            />
+          </label>
+          <br />
+          <h3>Number</h3>
+          <label>
+            <input
+              type="tel"
+              value={number}
+              onChange={(e) => this.handleChange("number", e)}
+            />
+          </label>
+          <br />
+          <button type="submit" className="buttonForm">
+            Add contact
+          </button>
+        </form>
+      </>
     );
   }
 }
+
+const mapStateToProps = (state) => ({
+  contacts: state.contacts.items,
+});
+
+const mapDispatchToProps = {
+  onAddContact: contactsActions.addContact,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(ContactForm);
 
 ContactForm.propTypes = {
   contacts: PropTypes.arrayOf(
@@ -87,5 +93,3 @@ ContactForm.propTypes = {
   ),
   onAddContact: PropTypes.func.isRequired,
 };
-
-export default ContactForm;
